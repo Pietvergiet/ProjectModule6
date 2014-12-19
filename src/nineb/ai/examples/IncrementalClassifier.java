@@ -29,7 +29,7 @@ public class IncrementalClassifier {
 	public static void main(String[] args) throws Exception {
 		// load data
 		ArffLoader loader = new ArffLoader();
-		loader.setFile(new File(args[0]));
+		loader.setFile(new File("data/blogs_train_generated.arff"));
 		Instances structure = loader.getStructure();
 		//structure.setClassIndex(structure.numAttributes() - 1);
 		// in blogs.arff the class attribute is the first attribute; not the last one!

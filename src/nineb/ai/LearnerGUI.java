@@ -15,6 +15,11 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import weka.classifiers.Classifier;
+import weka.classifiers.bayes.NaiveBayes;
+import weka.classifiers.bayes.NaiveBayesMultinomial;
+import weka.classifiers.trees.J48;
+
 import com.esotericsoftware.tablelayout.swing.Table;
 
 public class LearnerGUI extends JFrame implements ActionListener, TextListener, Runnable {
@@ -76,18 +81,25 @@ public class LearnerGUI extends JFrame implements ActionListener, TextListener, 
 	public void run() {
 		classifyText();
 		
-		if (textChanged) {
-			classifyText();
+		while (textChanged) {
 			textChanged = false;
+			classifyText();
 		}
 		
 		processing = false;
+		infoLabel.setText("Done");
+		validate();
 	}
 	
 	private void classifyText() {
-		predictionLabel.setText("Prediction: " + learner.getClass(textField.getText()));
-		infoLabel.setText("Done");
-		validate();
+		String input = textField.getText();
+		
+		if (input.length() != 0) {
+			predictionLabel.setText("Prediction: " + learner.getClass(input));
+			validate();
+		}
+		
+//		System.out.println(learner.getInstances());
 	}
 	
 	@Override
@@ -124,7 +136,9 @@ public class LearnerGUI extends JFrame implements ActionListener, TextListener, 
 	}
 	
 	public static void main(String[] args) throws Exception {
-		String[] options = { "None", "Blogs", "Spam" };
+		Classifier c = getUserClassifier();
+		
+		String[] options = { "None", "Language", "Spam" };
 		int option = JOptionPane.showOptionDialog(null, "Select data to start with", "Select preset",
 				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 		
@@ -132,22 +146,22 @@ public class LearnerGUI extends JFrame implements ActionListener, TextListener, 
 		switch (option) {
 		case 0:
 			classes = getClassesFromUser();
-			new LearnerGUI(new Learner(classes), classes);
+			new LearnerGUI(new Learner(c, classes), classes);
 			break;
 		case 1: {
-			classes = new String[] { "Male", "Female" };
-			Learner learner = new Learner(classes);
-			fillFileData(learner, "data/blogs/F", "Male");
-			fillFileData(learner, "data/blogs/M", "Female");
+			classes = new String[] { "English", "French" };
+			Learner learner = new Learner(c, classes);
+			fillFileData(learner, "data/language/english", "English");
+			fillFileData(learner, "data/language/french", "French");
 			
 			new LearnerGUI(learner, classes);
 			break;
 		}
 		case 2: {
 			classes = new String[] { "Spam", "Ham" };
-			Learner learner = new Learner(classes);
-			fillFileData(learner, "data/spam/ham", "Spam");
-			fillFileData(learner, "data/spam/spam", "Ham");
+			Learner learner = new Learner(c, classes);
+			fillFileData(learner, "data/spam/spam", "Spam");
+			fillFileData(learner, "data/spam/ham", "Ham");
 			
 			new LearnerGUI(learner, classes);
 			break;
@@ -157,10 +171,25 @@ public class LearnerGUI extends JFrame implements ActionListener, TextListener, 
 		}
 	}
 	
+	private static Classifier getUserClassifier() {
+		String[] options = { "Naive Bayes", "Naive Bayes (multinominal)", "J48" };
+		int option = JOptionPane.showOptionDialog(null, "Select classifier to work with", "Select classifier",
+				JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
+		
+		switch (option) {
+		case 0:
+			return new NaiveBayes();
+		case 1:
+			return new NaiveBayesMultinomial();
+		case 2:
+			return new J48();
+		default:
+			return null;
+		}
+	}
+	
 	private static void fillFileData(Learner learner, String path, String classification) {
 		File folder = new File(path);
-		
-		System.out.println(folder.exists());
 		
 		for (File f : folder.listFiles()) {
 			if (!f.isDirectory()) {

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import weka.classifiers.bayes.NaiveBayes;
+
 public class LearnerTest {
 	public static void main(String[] args) throws Exception {
 //		Learner learner = new Learner("A", "B", "C");
@@ -21,9 +23,9 @@ public class LearnerTest {
 //		System.out.println(learner.getClass("c"));
 		
 		String[] classes = new String[] { "Male", "Female" };
-		Learner learner = new Learner(classes);
-		fillFileData(learner, "data/blogs/F", "Male");
-		fillFileData(learner, "data/blogs/M", "Female");
+		Learner learner = new Learner(new NaiveBayes(), classes);
+		fillFileData(learner, "data/blogs/M", "Male");
+		fillFileData(learner, "data/blogs/F", "Female");
 		
 		System.out
 				.println(learner

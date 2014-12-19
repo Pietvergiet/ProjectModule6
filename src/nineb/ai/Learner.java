@@ -3,8 +3,8 @@ package nineb.ai;
 import java.util.Arrays;
 import java.util.Random;
 
+import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
-import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.meta.FilteredClassifier;
 import weka.core.Attribute;
 import weka.core.FastVector;
@@ -19,7 +19,7 @@ public class Learner {
 	private boolean hasData;
 	private FilteredClassifier classifier;
 	
-	public Learner(String... classes) throws Exception {
+	public Learner(Classifier c, String... classes) throws Exception {
 		this.classes = classes;
 		Arrays.sort(classes);
 		
@@ -40,7 +40,7 @@ public class Learner {
 		filter.setInputFormat(instances);
 		
 		classifier = new FilteredClassifier();
-		classifier.setClassifier(new NaiveBayes());
+		classifier.setClassifier(c);
 		classifier.setFilter(filter);
 	}
 	
@@ -49,27 +49,28 @@ public class Learner {
 //			Classifier classifier = new NaiveBayes();
 			classifier.buildClassifier(instances);
 			
-			Instance instance = new Instance(1.0, new double[] { instances.attribute(0).addStringValue(input), -1 });
-			Instances testInstances = new Instances("", attributes, 0);
+//			System.out.println(classifier.toString());
+			
+			Instances testInstances = new Instances("TestInstances", attributes, 0);
+			double[] values = new double[] { testInstances.attribute(0).addStringValue(input), -1 };
+			Instance instance = new Instance(1.0, values);
 			testInstances.setClassIndex(1);
 			testInstances.add(instance);
+//			testInstances.lastInstance().setValue(0, input);//because instances are weird
 			
 //			System.out.println(instances);
 			
-			String output = classes[(int) classifier.classifyInstance(testInstances.firstInstance())];
-//			System.out.printf("getting class of %s, returning %s\n", input, output);
-			
-			return output;
+			double classification = classifier.classifyInstance(testInstances.firstInstance());
+			if (Instance.isMissingValue(classification)) return null;
+			else return classes[(int) classification];
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 	
-	/**
-	 */
 	public void classify(String input, String specifiedClass) {
-//		System.out.printf("classifying %s as %s\n", input, specifiedClass);
+		System.out.printf("classifying %s as %s\n", input.substring(0, Math.min(40, input.length())), specifiedClass);
 		
 		hasData = true;
 		
@@ -77,7 +78,7 @@ public class Learner {
 		data[0] = instances.attribute(0).addStringValue(input);
 		data[1] = Arrays.binarySearch(classes, specifiedClass);//index of the class
 		instances.add(new Instance(1.0, data));
-		instances.lastInstance().setValue(0, input);
+//		instances.lastInstance().setValue(0, input);
 	}
 	
 	public void eval() throws Exception {
